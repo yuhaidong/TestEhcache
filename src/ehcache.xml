@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd">
+    <!-- 缓存文件位置 -->
+    <diskStore path="D:\\temp\\cache" />  
+    
+    <defaultCache maxElementsInMemory="1000" eternal="false"  
+        timeToIdleSeconds="120" timeToLiveSeconds="120" overflowToDisk="true" /> 
+    <!-- 定义缓存文件信息，其中“com.tt”为缓存文件的名字 -->  
+    <cache name="com.tt" maxElementsInMemory="10000" eternal="false"  
+        timeToIdleSeconds="300000" timeToLiveSeconds="600000" overflowToDisk="true" />  
+</ehcache>

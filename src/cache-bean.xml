@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+ <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN"  
+"http://www.springframework.org/dtd/spring-beans.dtd">  
+<beans>  
+    <!-- 引用ehCache 的配置-->  
+    <bean id="defaultCacheManager"  
+        class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">  
+        <property name="configLocation">  
+            <value>ehcache.xml</value>  
+        </property>
+    </bean>  
+  
+    <!-- 定义ehCache的工厂，并设置所使用的Cache的name，即“com.tt” -->  
+    <bean id="ehCache" class="org.springframework.cache.ehcache.EhCacheFactoryBean">  
+        <property name="cacheManager">  
+            <ref local="defaultCacheManager" />  
+        </property>
+        <!-- Cache的名称 -->
+        <property name="cacheName">  
+            <value>com.tt</value>  
+        </property>  
+    </bean>  
+  
+    <!-- 创建缓存、查询缓存的拦截器 -->  
+    <bean id="cacheMethodInterceptor" class="com.test.ehcache.CacheMethodInterceptor">  
+        <property name="cache">  
+            <ref local="ehCache" />  
+        </property>  
+    </bean>
+     
+    <!-- 更新缓存、删除缓存的拦截器 -->  
+    <bean id="cacheAfterReturningAdvice" class="com.test.ehcache.CacheAfterReturningAdvice">  
+        <property name="cache">  
+            <ref local="ehCache" />  
+        </property>  
+    </bean>
+      
+    <!-- 调用接口，被拦截的对象 -->
+    <bean id="serviceManager" class="com.test.service.ServiceManagerImpl" />  
+  
+  	<!-- 插入拦截器，确认调用哪个拦截器，拦截器拦截的方法名特点等，此处调用拦截器com.test.ehcache.CacheMethodInterceptor -->
+    <bean id="cachePointCut"  
+        class="org.springframework.aop.support.RegexpMethodPointcutAdvisor">  
+        <!-- 加入切面，切面为当执行完print方法后，在执行加入的切面 -->
+        <property name="advice">  
+            <ref local="cacheMethodInterceptor" />  
+        </property>  
+        <property name="patterns">  
+            <list> 
+            	<!--  
+			        ###  .表示符合任何单一字元                  
+			        ###  +表示符合前一个字元一次或多次                  
+			        ###  *表示符合前一个字元零次或多次                  
+			        ###  \Escape任何Regular expression使用到的符号                  
+			    -->                 
+    			<!-- .*表示前面的前缀(包括包名)，意思是表示getObject方法-->
+                <value>.*get.*</value>  
+            </list>  
+        </property>  
+    </bean>  
+    
+    <!-- 插入拦截器，确认调用哪个拦截器，拦截器拦截的方法名特点等，此处调用拦截器com.test.ehcache.CacheAfterReturningAdvice -->
+    <bean id="cachePointCutAdvice"  
+        class="org.springframework.aop.support.RegexpMethodPointcutAdvisor">  
+        <property name="advice">  
+            <ref local="cacheAfterReturningAdvice" />  
+        </property>  
+        <property name="patterns">  
+            <list>
+            	<!-- .*表示前面的前缀(包括包名)，意思是updateObject方法--> 
+                <value>.*update.*</value>  
+            </list>  
+        </property>  
+    </bean> 
+    
+    <!-- 代理工厂  -->
+    <bean id="proxyFactory" class="org.springframework.aop.framework.ProxyFactoryBean">
+    	<!-- 说明调用接口bean名称 -->
+    	<property name="target">  
+            <ref local="serviceManager" />  
+        </property>  
+    	<!-- 说明拦截器bean名称 -->
+        <property name="interceptorNames">  
+            <list>  
+                <value>cachePointCut</value>  
+                <value>cachePointCutAdvice</value>  
+            </list>  
+        </property> 
+    </bean> 
+</beans>
